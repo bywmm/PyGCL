@@ -1,5 +1,5 @@
 from GCL.augmentors.augmentor import Graph, Augmentor
-from GCL.augmentors.functional import compute_ppr
+from GCL.augmentors.functional import compute_ppr, compute_ppr_inductive
 
 
 class PPRDiffusion(Augmentor):
@@ -15,10 +15,18 @@ class PPRDiffusion(Augmentor):
         if self._cache is not None and self.use_cache:
             return self._cache
         x, edge_index, edge_weights = g.unfold()
-        edge_index, edge_weights = compute_ppr(
-            edge_index, edge_weights,
-            alpha=self.alpha, eps=self.eps, ignore_edge_attr=False, add_self_loop=self.add_self_loop
-        )
+        if isinstance(edge_index, list):
+            for i, (e_index, _, size) in enumerate(edge_index):
+                e_index, _ = compute_ppr_inductive(
+                    e_index, edge_weights[i] if edge_weights is not None else None, size[0], 
+                    alpha=self.alpha, eps=self.eps, ignore_edge_attr=False, add_self_loop=self.add_self_loop
+                )
+                edge_index[i] = (e_index, _, size)
+        else:
+            edge_index, edge_weights = compute_ppr(
+                edge_index, edge_weights,
+                alpha=self.alpha, eps=self.eps, ignore_edge_attr=False, add_self_loop=self.add_self_loop
+            )
         res = Graph(x=x, edge_index=edge_index, edge_weights=edge_weights)
         self._cache = res
         return res

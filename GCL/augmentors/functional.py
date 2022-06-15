@@ -246,6 +246,29 @@ def compute_ppr(edge_index, edge_weight=None, alpha=0.2, eps=0.1, ignore_edge_at
     return edge_index, edge_weight
 
 
+def compute_ppr_inductive(edge_index, edge_weight=None, N=None, alpha=0.2, eps=0.1, ignore_edge_attr=True, add_self_loop=True):
+    if N is None:
+        N = edge_index.max().item() + 1
+    if ignore_edge_attr or edge_weight is None:
+        edge_weight = torch.ones(
+            edge_index.size(1), device=edge_index.device)
+    if add_self_loop:
+        edge_index, edge_weight = add_self_loops(
+            edge_index, edge_weight, fill_value=1, num_nodes=N)
+        edge_index, edge_weight = coalesce(edge_index, edge_weight, N, N)
+    edge_index, edge_weight = coalesce(edge_index, edge_weight, N, N)
+    edge_index, edge_weight = GDC().transition_matrix(
+        edge_index, edge_weight, N, normalization='sym')
+    diff_mat = GDC().diffusion_matrix_exact(
+        edge_index, edge_weight, N, method='ppr', alpha=alpha)
+    edge_index, edge_weight = GDC().sparsify_dense(diff_mat, method='threshold', eps=eps)
+    edge_index, edge_weight = coalesce(edge_index, edge_weight, N, N)
+    edge_index, edge_weight = GDC().transition_matrix(
+        edge_index, edge_weight, N, normalization='sym')
+
+    return edge_index, edge_weight
+
+
 def get_sparse_adj(edge_index: torch.LongTensor, edge_weight: torch.FloatTensor = None,
                    add_self_loop: bool = True) -> torch.sparse.Tensor:
     num_nodes = edge_index.max().item() + 1
