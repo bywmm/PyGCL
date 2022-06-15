@@ -115,7 +115,9 @@ def test(encoder_model, dataloader):
 
 def main():
     device = torch.device('cuda')
-    path = osp.join(osp.expanduser('~'), 'datasets')
+    path = osp.join(osp.expanduser('~'), 'dataset/graph')
+    print(path)
+    # assert False
     dataset = TUDataset(path, name='PTC_MR')
     dataloader = DataLoader(dataset, batch_size=128)
     input_dim = max(dataset.num_features, 1)

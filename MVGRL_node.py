@@ -12,6 +12,9 @@ from GCL.models import DualBranchContrast
 from torch_geometric.nn import GCNConv
 from torch_geometric.nn.inits import uniform
 from torch_geometric.datasets import Planetoid
+from torch_geometric.datasets import Amazon
+from torch_geometric.datasets import WikipediaNetwork
+from torch_geometric.datasets import Actor
 
 
 class GConv(nn.Module):
@@ -63,7 +66,8 @@ def train(encoder_model, contrast_model, data, optimizer):
     encoder_model.train()
     optimizer.zero_grad()
     z1, z2, g1, g2, z1n, z2n = encoder_model(data.x, data.edge_index)
-    loss = contrast_model(h1=z1, h2=z2, g1=g1, g2=g2, h1n=z1n, h2n=z2n)
+    # loss = contrast_model(h1=z1, h2=z2, g1=g1, g2=g2, h1n=z1n, h2n=z2n)
+    loss = contrast_model(h1=z1, h2=z2, g1=g1, g2=g2, h3=z1n, h4=z2n)
     loss.backward()
     optimizer.step()
     return loss.item()
@@ -79,9 +83,10 @@ def test(encoder_model, data):
 
 
 def main():
-    device = torch.device('cuda')
-    path = osp.join(osp.expanduser('~'), 'datasets')
-    dataset = Planetoid(path, name='Cora', transform=T.NormalizeFeatures())
+    device = torch.device('cuda:1')
+    # path = osp.join(osp.expanduser('~'), 'dataset/graph/Planetoid/')
+    # dataset = Planetoid(path, name='Cora', transform=T.NormalizeFeatures())
+    dataset = Actor(root='data/film', transform=T.NormalizeFeatures())
     data = dataset[0].to(device)
 
     aug1 = A.Identity()

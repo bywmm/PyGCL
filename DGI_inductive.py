@@ -10,7 +10,8 @@ from GCL.models import SingleBranchContrast
 from torch_geometric.nn import SAGEConv
 from torch_geometric.nn.inits import uniform
 from torch_geometric.data import NeighborSampler
-from torch_geometric.datasets import Reddit
+from torch_geometric.datasets import Reddit, Actor
+import torch_geometric.transforms as T
 
 
 class GConv(nn.Module):
@@ -85,8 +86,8 @@ def main():
     torch.multiprocessing.set_sharing_strategy('file_system')
 
     device = torch.device('cuda')
-    path = osp.join(osp.expanduser('~'), 'datasets', 'Reddit')
-    dataset = Reddit(path)
+    # dataset = Reddit(root='data/Reddit')
+    dataset = Actor(root='data/film', transform=T.NormalizeFeatures())
     data = dataset[0].to(device)
 
     train_loader = NeighborSampler(data.edge_index, node_idx=None,
